@@ -27,13 +27,24 @@ async def is_allowed(update: Update, context: ContextTypes.DEFAULT_TYPE) -> bool
         return False
 
     if user.id in ALLOWED_USER_IDS:
+        logging.info("Allowed by user ID: %s", user.id)
         return True
 
     if chat.type == "private":
         return False
 
-    member = await context.bot.get_chat_member(chat.id, user.id)
-    return member.status in ("administrator", "creator")
+    try:
+        admins = await context.bot.get_chat_administrators(chat.id)
+        admin_ids = {admin.user.id for admin in admins}
+
+        logging.info("Chat %s admins: %s", chat.id, admin_ids)
+        logging.info("Checking user %s in admins", user.id)
+
+        return user.id in admin_ids
+
+    except Exception as e:
+        logging.exception("Admin check failed in chat %s: %s", chat.id, e)
+        return False
 
 async def run_countdown(chat_id: int, context: ContextTypes.DEFAULT_TYPE):
     try:
