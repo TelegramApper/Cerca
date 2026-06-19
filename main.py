@@ -44,7 +44,7 @@ async def run_countdown(chat_id: int, context: ContextTypes.DEFAULT_TYPE):
             (0.0, "3"),
             (STEP, "2"),
             (STEP * 2, "1"),
-            (STEP * 3, "v"),
+            (STEP * 3, "V"),
         ]
 
         for offset, text in schedule:
