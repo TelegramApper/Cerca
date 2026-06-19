@@ -17,6 +17,8 @@ ALLOWED_USER_IDS = {
     if x.strip().isdigit()
 }
 
+STEP = 0.7
+
 async def is_allowed(update: Update, context: ContextTypes.DEFAULT_TYPE) -> bool:
     user = update.effective_user
     chat = update.effective_chat
@@ -33,32 +35,44 @@ async def is_allowed(update: Update, context: ContextTypes.DEFAULT_TYPE) -> bool
     member = await context.bot.get_chat_member(chat.id, user.id)
     return member.status in ("administrator", "creator")
 
+async def run_countdown(chat_id: int, context: ContextTypes.DEFAULT_TYPE):
+    try:
+        loop = asyncio.get_running_loop()
+        start = loop.time()
+
+        schedule = [
+            (0.0, "3"),
+            (STEP, "2"),
+            (STEP * 2, "1"),
+            (STEP * 3, "v"),
+        ]
+
+        for offset, text in schedule:
+            wait_time = start + offset - loop.time()
+            if wait_time > 0:
+                await asyncio.sleep(wait_time)
+
+            logging.info("Sending %s to chat %s", text, chat_id)
+            await context.bot.send_message(chat_id=chat_id, text=text)
+
+        logging.info("Countdown finished in chat %s", chat_id)
+
+    except Exception as e:
+        logging.exception("Error inside countdown task: %s", e)
+
 async def c_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     try:
         if not await is_allowed(update, context):
-            logging.info("User not allowed: %s", update.effective_user.id if update.effective_user else "unknown")
+            logging.info(
+                "User not allowed: %s",
+                update.effective_user.id if update.effective_user else "unknown"
+            )
             return
 
-        msg = update.effective_message
         chat_id = update.effective_chat.id
-
         logging.info("Countdown started in chat %s", chat_id)
 
-        await msg.reply_text("3")
-        await asyncio.sleep(1)
-
-        logging.info("Sending 2 to chat %s", chat_id)
-        await context.bot.send_message(chat_id=chat_id, text="2")
-        await asyncio.sleep(1)
-
-        logging.info("Sending 1 to chat %s", chat_id)
-        await context.bot.send_message(chat_id=chat_id, text="1")
-        await asyncio.sleep(1)
-
-        logging.info("Sending v to chat %s", chat_id)
-        await context.bot.send_message(chat_id=chat_id, text="v")
-
-        logging.info("Countdown finished in chat %s", chat_id)
+        context.application.create_task(run_countdown(chat_id, context))
 
     except Exception as e:
         logging.exception("Error inside /c command: %s", e)
