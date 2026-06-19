@@ -17,7 +17,7 @@ ALLOWED_USER_IDS = {
     if x.strip().isdigit()
 }
 
-STEP = 0.7
+STEP = 1.0
 
 async def is_allowed(update: Update, context: ContextTypes.DEFAULT_TYPE) -> bool:
     user = update.effective_user
@@ -44,7 +44,7 @@ async def run_countdown(chat_id: int, context: ContextTypes.DEFAULT_TYPE):
             (0.0, "3"),
             (STEP, "2"),
             (STEP * 2, "1"),
-            (STEP * 3, "V"),
+            (STEP * 3, "v"),
         ]
 
         for offset, text in schedule:
