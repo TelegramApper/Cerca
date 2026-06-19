@@ -1,7 +1,13 @@
 import os
 import asyncio
+import logging
 from telegram import Update
 from telegram.ext import ApplicationBuilder, CommandHandler, ContextTypes
+
+logging.basicConfig(
+    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+    level=logging.INFO
+)
 
 TOKEN = os.getenv("BOT_TOKEN", "")
 
@@ -28,17 +34,34 @@ async def is_allowed(update: Update, context: ContextTypes.DEFAULT_TYPE) -> bool
     return member.status in ("administrator", "creator")
 
 async def c_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    if not await is_allowed(update, context):
-        return
+    try:
+        if not await is_allowed(update, context):
+            logging.info("User not allowed: %s", update.effective_user.id if update.effective_user else "unknown")
+            return
 
-    msg = update.effective_message
-    await msg.reply_text("3")
-    await asyncio.sleep(1)
-    await msg.reply_text("2")
-    await asyncio.sleep(1)
-    await msg.reply_text("1")
-    await asyncio.sleep(1)
-    await msg.reply_text("v")
+        msg = update.effective_message
+        chat_id = update.effective_chat.id
+
+        logging.info("Countdown started in chat %s", chat_id)
+
+        await msg.reply_text("3")
+        await asyncio.sleep(1)
+
+        logging.info("Sending 2 to chat %s", chat_id)
+        await context.bot.send_message(chat_id=chat_id, text="2")
+        await asyncio.sleep(1)
+
+        logging.info("Sending 1 to chat %s", chat_id)
+        await context.bot.send_message(chat_id=chat_id, text="1")
+        await asyncio.sleep(1)
+
+        logging.info("Sending v to chat %s", chat_id)
+        await context.bot.send_message(chat_id=chat_id, text="v")
+
+        logging.info("Countdown finished in chat %s", chat_id)
+
+    except Exception as e:
+        logging.exception("Error inside /c command: %s", e)
 
 def main():
     if not TOKEN:
