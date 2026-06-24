@@ -17,7 +17,7 @@ ALLOWED_USER_IDS = {
     if x.strip().isdigit()
 }
 
-STEP = 1.7
+STEP = 2.0
 
 async def is_allowed(update: Update, context: ContextTypes.DEFAULT_TYPE) -> bool:
     user = update.effective_user
